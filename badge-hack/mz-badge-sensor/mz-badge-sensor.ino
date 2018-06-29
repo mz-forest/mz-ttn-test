@@ -80,6 +80,27 @@ void handleInterrupButtonDebounce(byte buttonPin, String text) {
   // Configure wakeup from deep sleep on all 4 buttons
 }
 
+//============= do your TX/RX functions here ================
+void resetCounts(measurements &c)
+{
+  c.slow = 0;
+  c.mid = 0;
+  c.quick = 0;
+}
+
+//transmit counts to ttn
+void sendMessage()
+{
+  Serial.println();
+  Serial.print("Slow: ");
+  Serial.print(count.slow);
+  Serial.print(" Mid: ");
+  Serial.print(count.mid);
+  Serial.print(" Quick: ");
+  Serial.println(count.quick);
+  Serial.println();
+}
+
 void setup()
 {
     WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
@@ -123,6 +144,8 @@ void loop()
 {
     delay(5000);
     ++value;
+    sendMessage();
+    resetCounts(count);
 
     Serial.print("connecting to ");
     Serial.println(host);
