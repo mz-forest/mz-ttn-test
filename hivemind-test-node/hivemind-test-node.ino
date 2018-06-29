@@ -20,7 +20,7 @@ typedef struct
 } measurements;
 
 measurements count;
-uint32_t refresh_ms = 60000;
+uint32_t refresh_ms = 10000;
 TheThingsNetwork ttn(loraSerial, debugSerial, freqPlan);
 
 //============= do your sensor functions here ================
@@ -66,12 +66,32 @@ void message(const byte *payload, size_t length, port_t port)
 {
   debugSerial.println("-- MESSAGE");
   debugSerial.print(length);
-  debugSerial.println(" bytes received.");
+  debugSerial.println(" bytes received:");
 
-  // Only handle messages of a single byte
-  if (length != 1)
+  if (length > 0)
   {
-    return;
+    uint32_t newRefresh = 0;
+    for(int i = 0; i < length; i++)
+    {
+      debugSerial.print(payload[i]);
+      newRefresh += payload[i] * pow(256, length - i - 1);
+    }
+    debugSerial.println();
+    if(newRefresh < 5) // todo: check if bigger then max(uint32_t / 1000)
+    {
+      debugSerial.print("Error, Refresh rate has to be bigger then 5s, but it's ");
+      debugSerial.println(newRefresh);
+      return;
+    }
+    else if(newRefresh * 1000 > UINT32_MAX)
+    {
+      debugSerial.print("Error, Refresh rate has to be smaller then UINT32_MAX, but it's ");
+      debugSerial.println(newRefresh);
+      return;
+    }
+    refresh_ms = newRefresh * 1000;
+    debugSerial.print("New Refresh ratin in ms: ");
+    debugSerial.println(refresh_ms);
   }
 }
 
@@ -105,12 +125,6 @@ void setup()
 void loop()
 {
   debugSerial.println("-- LOOP");
-
-  //============= do your sensor work here ================
-
-
-  //============= End of do your sensor work here =========
-
   sendMessage();
   delay(refresh_ms);
 }
