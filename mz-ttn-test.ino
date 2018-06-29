@@ -20,6 +20,11 @@ void setup()
   // Wait a maximum of 10s for Serial Monitor
   while (!debugSerial && millis() < 10000);
 
+  //============= do your sensor setup here ================
+
+
+  //============= End of do your sensor setup here =========
+
   // Set callback for incoming messages
   ttn.onMessage(message);
 
@@ -34,10 +39,14 @@ void loop()
 {
   debugSerial.println("-- LOOP");
 
+  //============= do your sensor work here ================
+
+
+  //============= End of do your sensor work here =========
+
   // Prepare payload of 1 byte to indicate LED status
   byte payload[1];
   payload[0] = (digitalRead(LED_BUILTIN) == HIGH) ? 1 : 0;
-
   // Send it off
   ttn.sendBytes(payload, sizeof(payload));
 
