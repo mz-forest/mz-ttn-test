@@ -13,8 +13,16 @@
 
 const char* ssid     = "impacthub";
 const char* password = "coworking@ImpactHub";
-
 const char* host = "data.sparkfun.com";
+
+typedef struct 
+{
+  uint16_t slow;
+  uint16_t mid;
+  uint16_t quick;
+} measurements;
+
+measurements count;
 
 
 // PINS
@@ -33,13 +41,16 @@ portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
 void IRAM_ATTR handleInterruptBTN1() { 
   handleInterrupButtonDebounce(BTN1, "Button 1 was pushed"); // Handle BTN1
+  count.quick++;
 }
 
 void IRAM_ATTR handleInterruptBTN2() {
   handleInterrupButtonDebounce(BTN2, "Button 2 was pushed"); // Handle BTN2
+  count.mid++;
 }
 void IRAM_ATTR handleInterruptBTN3() {
   handleInterrupButtonDebounce(BTN3, "Button 3 was pushed"); // Handle BTN3
+  count.slow++;
 }
 
 void IRAM_ATTR handleInterruptBTN4() {
