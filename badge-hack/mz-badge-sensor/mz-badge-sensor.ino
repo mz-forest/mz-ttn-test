@@ -40,28 +40,27 @@ const uint64_t BTN4_mask = 1ULL << BTN4;
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
 void IRAM_ATTR handleInterruptBTN1() { 
-  handleInterrupButtonDebounce(BTN1, "Button 1 was pushed"); // Handle BTN1
-  count.quick++;
+  handleInterrupButtonDebounce(BTN1, "Button 1 was pushed", count.quick); // Handle BTN1
+  
 }
 
 void IRAM_ATTR handleInterruptBTN2() {
-  handleInterrupButtonDebounce(BTN2, "Button 2 was pushed"); // Handle BTN2
-  count.mid++;
+  handleInterrupButtonDebounce(BTN2, "Button 2 was pushed", count.mid); // Handle BTN2
 }
 void IRAM_ATTR handleInterruptBTN3() {
-  handleInterrupButtonDebounce(BTN3, "Button 3 was pushed"); // Handle BTN3
-  count.slow++;
+  handleInterrupButtonDebounce(BTN3, "Button 3 was pushed", count.slow); // Handle BTN3
 }
 
 void IRAM_ATTR handleInterruptBTN4() {
-  handleInterrupButtonDebounce(BTN4, "Button 4 was pushed"); // Handle BTN4
+  uint16_t dummy;
+  handleInterrupButtonDebounce(BTN4, "Button 4 was pushed", dummy); // Handle BTN4
 }
 
 /**
  *  This is the handler actually doing the work, locking the mutex (one interrupt at a time) and
  * debouncing it so it counts only if the time beetween both interrupts is greater than 100ms.
  * */
-void handleInterrupButtonDebounce(byte buttonPin, String text) {
+void handleInterrupButtonDebounce(byte buttonPin, String text, uint16_t &counter) {
   portENTER_CRITICAL_ISR(&mux);
   static unsigned long last_interrupt_time = 0;
   unsigned long interrupt_time = millis();
@@ -70,6 +69,7 @@ void handleInterrupButtonDebounce(byte buttonPin, String text) {
     // distinguish between pressed and released state
     if(digitalRead(buttonPin) == LOW) {
       Serial.print("[pressed] ");
+      counter++;
     } else {
       Serial.print("[released] ");
     }
