@@ -10,7 +10,7 @@
  * The front buttons are used to count Horses, Hikers, Bikers and maybe Zombies.
  * 
  * botched, together by Stefan Huber, inspired by the samples found in the badge repo of Michel Racic
- * as from a hackaton, the code wild and unstructured ;)
+ * as from a hackaton, the code is wild and unstructured ;)
  */
 
 #include <WiFi.h>
