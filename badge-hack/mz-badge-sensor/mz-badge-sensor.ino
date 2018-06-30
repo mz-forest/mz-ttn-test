@@ -1,10 +1,35 @@
-/*
- *  This sketch sends data via HTTP GET requests to data.sparkfun.com service.
- *
- *  You need to get streamId and privateKey at data.sparkfun.com and paste them
- *  below. Or just customize this script to talk to other HTTP servers.
- *
- */
+//==========badge epaper display stuff=====================
+
+// GxEPD lib and display drivers
+#include <GxEPD.h>
+#include <GxGDEW0213Z16/GxGDEW0213Z16.cpp>  // 2.13" b/w/r
+#include GxEPD_BitmapExamples
+
+// FreeFonts from Adafruit_GFX
+#include <Fonts/FreeMonoBold9pt7b.h>
+#include <Fonts/FreeMonoBold12pt7b.h>
+#include <Fonts/FreeMonoBold18pt7b.h>
+#include <Fonts/FreeMonoBold24pt7b.h>
+
+#include <GxIO/GxIO_SPI/GxIO_SPI.cpp>
+#include <GxIO/GxIO.cpp>
+
+// Those are from the board definition and don't need to be defined as they are standard for NINA
+//static const uint8_t SS    = 5;  //GPIO28
+//static const uint8_t MOSI  = 23; //GPIO1
+//static const uint8_t MISO  = 19; // not used for waveshare display
+//static const uint8_t SCK   = 18; // GPIO29
+
+// Specific pins used on the MakeZurich badge, adjust if you are using the Display and the NINA standalone
+static const uint8_t DC = 22;      //GPIO20
+static const uint8_t RST = 21;     //GPIO8
+static const uint8_t BUSYN = 4;    //GPIO24
+
+GxIO_Class io(SPI, SS, DC, RST); 
+GxEPD_Class display(io, RST, BUSYN); 
+
+//============= Wifi stuff =====================
+
 
 #include <WiFi.h>
 
@@ -100,11 +125,70 @@ void printMessage()
   Serial.println();
 }
 
+#define HAS_RED_COLOR
+
+void showMZText()
+{
+  display.fillScreen(GxEPD_WHITE);
+  display.setTextColor(GxEPD_BLACK);
+  display.setFont(&FreeMonoBold18pt7b);
+  display.setRotation(3);
+  display.setCursor(0, 0);
+  display.println();
+  
+  // Print MakeZurich big using red for upper case letters
+  display.setTextColor(GxEPD_RED);
+  display.print("M");
+  display.setTextColor(GxEPD_BLACK);
+  display.print("ake");
+  display.setTextColor(GxEPD_RED);
+  display.print("Z");
+  display.setTextColor(GxEPD_BLACK);
+  display.print("urich");
+  display.println();
+
+  // Print the event date small
+  display.setFont(&FreeMonoBold9pt7b);
+  display.println("Juni 22-30, 2018");
+  display.update();
+  delay(10000);
+  display.setRotation(0);
+}
+
+void showDataSendt(String &jsonString)
+{
+  display.fillScreen(GxEPD_WHITE);
+  display.setTextColor(GxEPD_BLACK);
+  display.setFont(&FreeMonoBold18pt7b);
+  display.setRotation(3);
+  display.setCursor(0, 0);
+  display.println();
+  
+  // Print MakeZurich big using red for upper case letters
+  display.setTextColor(GxEPD_RED);
+  display.print("D");
+  display.setTextColor(GxEPD_BLACK);
+  display.print("ata");
+  display.setTextColor(GxEPD_RED);
+  display.print("S");
+  display.setTextColor(GxEPD_BLACK);
+  display.print("endt:");
+  display.println();
+
+  display.setFont(&FreeMonoBold9pt7b);
+  display.println("random");
+  display.update();
+  delay(10000);
+  display.setRotation(0);
+}
+
 void setup()
 {
     WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
     Serial.begin(115200);
-    delay(10);
+    //display.init(115200); // enable diagnostic output on Serial
+    delay(1000);
+    //showMZText();
 
     // Setup interrupts for Buttons
     pinMode(BTN1, INPUT_PULLUP);
@@ -124,12 +208,16 @@ void setup()
     Serial.print("Connecting to ");
     Serial.println(ssid);
 
+    noInterrupts(); 
+
     WiFi.begin(ssid, password);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
     }
+
+    interrupts();
 
     Serial.println("");
     Serial.println("WiFi connected");
@@ -161,6 +249,8 @@ void loop()
     Serial.print("connecting to ");
     Serial.println(host);
 
+    noInterrupts(); 
+
     // Use WiFiClient class to create TCP connections
     WiFiClient client;
     const int httpPort = 80;
@@ -168,8 +258,6 @@ void loop()
         Serial.println("connection failed");
         return;
     }
-
-     
 
     Serial.print("Requesting URL: ");
     Serial.println(url);
@@ -193,14 +281,18 @@ void loop()
         }
     }
 
+    interrupts(); 
+
     // Read all the lines of the reply from server and print them to Serial
     while(client.available()) {
         String line = client.readStringUntil('\r');
         Serial.print(line);
     }
-    resetCounts(count);
+    
 
     Serial.println();
     Serial.println("closing connection");
+    //showDataSendt(jsonData);
+    resetCounts(count);
 }
 
