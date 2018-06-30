@@ -1,35 +1,17 @@
-//==========badge epaper display stuff=====================
-
-// GxEPD lib and display drivers
-#include <GxEPD.h>
-#include <GxGDEW0213Z16/GxGDEW0213Z16.cpp>  // 2.13" b/w/r
-#include GxEPD_BitmapExamples
-
-// FreeFonts from Adafruit_GFX
-#include <Fonts/FreeMonoBold9pt7b.h>
-#include <Fonts/FreeMonoBold12pt7b.h>
-#include <Fonts/FreeMonoBold18pt7b.h>
-#include <Fonts/FreeMonoBold24pt7b.h>
-
-#include <GxIO/GxIO_SPI/GxIO_SPI.cpp>
-#include <GxIO/GxIO.cpp>
-
-// Those are from the board definition and don't need to be defined as they are standard for NINA
-//static const uint8_t SS    = 5;  //GPIO28
-//static const uint8_t MOSI  = 23; //GPIO1
-//static const uint8_t MISO  = 19; // not used for waveshare display
-//static const uint8_t SCK   = 18; // GPIO29
-
-// Specific pins used on the MakeZurich badge, adjust if you are using the Display and the NINA standalone
-static const uint8_t DC = 22;      //GPIO20
-static const uint8_t RST = 21;     //GPIO8
-static const uint8_t BUSYN = 4;    //GPIO24
-
-GxIO_Class io(SPI, SS, DC, RST); 
-GxEPD_Class display(io, RST, BUSYN); 
-
-//============= Wifi stuff =====================
-
+/*
+ * This sketch hackes the Conforence Badge of https://makezurich.ch
+ * Badge Info: http://rac.su/project/makezurich-18-badge/
+ * Badge Repo: https://github.com/rac2030/IoT-conference-badge
+ * This sketchs Repo: https://github.com/mz-forest/mz-ttn-test
+ * 
+ * This Sketch is part of the Forest People Project, which aims to count people in the forest
+ * and transimts the data by LoRaWan or in this case WLan to the The Things Network.
+ * 
+ * The front buttons are used to count Horses, Hikers, Bikers and maybe Zombies.
+ * 
+ * botched, together by Stefan Huber, inspired by the samples found in the badge repo
+ * as from a hackaton, the code wild and unstructured ;)
+ */
 
 #include <WiFi.h>
 
@@ -125,63 +107,6 @@ void printMessage()
   Serial.println();
 }
 
-#define HAS_RED_COLOR
-
-void showMZText()
-{
-  display.fillScreen(GxEPD_WHITE);
-  display.setTextColor(GxEPD_BLACK);
-  display.setFont(&FreeMonoBold18pt7b);
-  display.setRotation(3);
-  display.setCursor(0, 0);
-  display.println();
-  
-  // Print MakeZurich big using red for upper case letters
-  display.setTextColor(GxEPD_RED);
-  display.print("M");
-  display.setTextColor(GxEPD_BLACK);
-  display.print("ake");
-  display.setTextColor(GxEPD_RED);
-  display.print("Z");
-  display.setTextColor(GxEPD_BLACK);
-  display.print("urich");
-  display.println();
-
-  // Print the event date small
-  display.setFont(&FreeMonoBold9pt7b);
-  display.println("Juni 22-30, 2018");
-  display.update();
-  delay(10000);
-  display.setRotation(0);
-}
-
-void showDataSendt(String &jsonString)
-{
-  display.fillScreen(GxEPD_WHITE);
-  display.setTextColor(GxEPD_BLACK);
-  display.setFont(&FreeMonoBold18pt7b);
-  display.setRotation(3);
-  display.setCursor(0, 0);
-  display.println();
-  
-  // Print MakeZurich big using red for upper case letters
-  display.setTextColor(GxEPD_RED);
-  display.print("D");
-  display.setTextColor(GxEPD_BLACK);
-  display.print("ata");
-  display.setTextColor(GxEPD_RED);
-  display.print("S");
-  display.setTextColor(GxEPD_BLACK);
-  display.print("endt:");
-  display.println();
-
-  display.setFont(&FreeMonoBold9pt7b);
-  display.println("random");
-  display.update();
-  delay(10000);
-  display.setRotation(0);
-}
-
 void setup()
 {
     WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
@@ -232,8 +157,6 @@ void loop()
     delay(5000);
     ++value;
     printMessage();
-
-    //https://gateway.hivemind.ch/v1/capture/3157b1a0419836bc807b11274001553c?id=PRAKTIKANT1
 
     // We now create a URI for the request
     const char* host = "gateway.hivemind.ch";
@@ -288,7 +211,6 @@ void loop()
         String line = client.readStringUntil('\r');
         Serial.print(line);
     }
-    
 
     Serial.println();
     Serial.println("closing connection");
