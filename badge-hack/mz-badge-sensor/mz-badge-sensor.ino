@@ -1,9 +1,16 @@
 /*
- *  This sketch sends data via HTTP GET requests to data.sparkfun.com service.
- *
- *  You need to get streamId and privateKey at data.sparkfun.com and paste them
- *  below. Or just customize this script to talk to other HTTP servers.
- *
+ * This sketch hackes the Conforence Badge of https://makezurich.ch
+ * Badge Info: http://rac.su/project/makezurich-18-badge/
+ * Badge Repo: https://github.com/rac2030/IoT-conference-badge
+ * This sketchs Repo: https://github.com/mz-forest/mz-ttn-test
+ * 
+ * This Sketch is part of the Forest People Project, which aims to count people in the forest
+ * and transimts the data by LoRaWan or in this case WLan to the The Things Network.
+ * 
+ * The front buttons are used to count Horses, Hikers, Bikers and maybe Zombies.
+ * 
+ * botched, together by Stefan Huber, inspired by the samples found in the badge repo of Michel Racic
+ * as from a hackaton, the code is wild and unstructured ;)
  */
 
 #include <WiFi.h>
@@ -104,7 +111,9 @@ void setup()
 {
     WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
     Serial.begin(115200);
-    delay(10);
+    //display.init(115200); // enable diagnostic output on Serial
+    delay(1000);
+    //showMZText();
 
     // Setup interrupts for Buttons
     pinMode(BTN1, INPUT_PULLUP);
@@ -124,12 +133,16 @@ void setup()
     Serial.print("Connecting to ");
     Serial.println(ssid);
 
+    noInterrupts(); 
+
     WiFi.begin(ssid, password);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
     }
+
+    interrupts();
 
     Serial.println("");
     Serial.println("WiFi connected");
@@ -145,8 +158,6 @@ void loop()
     ++value;
     printMessage();
 
-    //https://gateway.hivemind.ch/v1/capture/3157b1a0419836bc807b11274001553c?id=PRAKTIKANT1
-
     // We now create a URI for the request
     const char* host = "gateway.hivemind.ch";
     String url = "/v1/capture/3157b1a0419836bc807b11274001553c?id=PRAKTIKANT1";
@@ -161,6 +172,8 @@ void loop()
     Serial.print("connecting to ");
     Serial.println(host);
 
+    noInterrupts(); 
+
     // Use WiFiClient class to create TCP connections
     WiFiClient client;
     const int httpPort = 80;
@@ -168,8 +181,6 @@ void loop()
         Serial.println("connection failed");
         return;
     }
-
-     
 
     Serial.print("Requesting URL: ");
     Serial.println(url);
@@ -193,14 +204,17 @@ void loop()
         }
     }
 
+    interrupts(); 
+
     // Read all the lines of the reply from server and print them to Serial
     while(client.available()) {
         String line = client.readStringUntil('\r');
         Serial.print(line);
     }
-    resetCounts(count);
 
     Serial.println();
     Serial.println("closing connection");
+    //showDataSendt(jsonData);
+    resetCounts(count);
 }
 
