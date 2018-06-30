@@ -13,7 +13,7 @@
 
 const char* ssid     = "impacthub";
 const char* password = "coworking@ImpactHub";
-const char* host = "data.sparkfun.com";
+
 
 typedef struct 
 {
@@ -41,7 +41,6 @@ portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
 void IRAM_ATTR handleInterruptBTN1() { 
   handleInterrupButtonDebounce(BTN1, "Button 1 was pushed", count.quick); // Handle BTN1
-  
 }
 
 void IRAM_ATTR handleInterruptBTN2() {
@@ -89,7 +88,7 @@ void resetCounts(measurements &c)
 }
 
 //transmit counts to ttn
-void sendMessage()
+void printMessage()
 {
   Serial.println();
   Serial.print("Slow: ");
@@ -144,8 +143,20 @@ void loop()
 {
     delay(5000);
     ++value;
-    sendMessage();
-    resetCounts(count);
+    printMessage();
+
+    //https://gateway.hivemind.ch/v1/capture/3157b1a0419836bc807b11274001553c?id=PRAKTIKANT1
+
+    // We now create a URI for the request
+    const char* host = "gateway.hivemind.ch";
+    String url = "/v1/capture/3157b1a0419836bc807b11274001553c?id=PRAKTIKANT1";
+    String jsonData = "{\"hikers\":";
+    jsonData += count.slow;
+    jsonData += ",\"bikers\":";
+    jsonData += count.mid;
+    jsonData += ",\"horses\":";
+    jsonData += count.quick;
+    jsonData += "}";
 
     Serial.print("connecting to ");
     Serial.println(host);
@@ -158,19 +169,24 @@ void loop()
         return;
     }
 
-    // We now create a URI for the request
-    String url = "/input/";
+     
 
     Serial.print("Requesting URL: ");
     Serial.println(url);
+    String postData = String("POST ") + url + " HTTP/1.1\r\n" +
+                 "Host: " + host + "\r\n" + 
+                 "Content-Type: " + "application/json\r\n"
+                 "Content-Length: " + jsonData.length() + "\r\n\r\n" +
+                 jsonData + "\r\n" ;
+                 //+ "Connection: close\r\n\r\n";
+    Serial.println("POST data: ");
+    Serial.print(postData);
 
     // This will send the request to the server
-    client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-                 "Host: " + host + "\r\n" +
-                 "Connection: close\r\n\r\n");
+    client.print(postData);
     unsigned long timeout = millis();
     while (client.available() == 0) {
-        if (millis() - timeout > 5000) {
+        if (millis() - timeout > 10000) {
             Serial.println(">>> Client Timeout !");
             client.stop();
             return;
@@ -182,6 +198,7 @@ void loop()
         String line = client.readStringUntil('\r');
         Serial.print(line);
     }
+    resetCounts(count);
 
     Serial.println();
     Serial.println("closing connection");
